@@ -1,6 +1,4 @@
 const http = require("http");
-const url = require("url");
-const { StringDecoder } = require("string_decoder");
 
 const { handleReqRes } = require("./helpers/handleReqRes");
 const app = {};
