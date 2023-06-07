@@ -1,18 +1,40 @@
 const http = require("http");
 
 const { handleReqRes } = require("./helpers/handleReqRes");
+const environemnt = require("./helpers/environments");
+const data = require("./lib/data");
 const app = {};
 
-app.config = {
-  port: 3000,
-};
-
+// data.create(
+//   "test",
+//   "newFile",
+//   { name: "Bangladesh", language: "Bangla" },
+//   function (err) {
+//     console.log(`error was`, err);
+//   }
+// );
+// data.read("test", "newFile", (err, data) => {
+//   console.log(err, data);
+// });
+// data.update(
+//   "test",
+//   "newFile",
+//   { name: "Eangladesh", language: "Eangla" },
+//   (err) => {
+//     console.log(err);
+//   }
+// );
+data.delete("test", "newFile", (err) => {
+  console.log(err);
+});
+//update existing file
 //create server
 
 app.createServer = () => {
   const server = http.createServer(app.handelReqRes);
-  server.listen(app.config.port, () => {
-    console.log(`listen port ${app.config.port} `);
+  server.listen(environemnt.port, () => {
+    //console.log(`environment variable is ${process.env.NODE_ENV}`);
+    console.log(`listen port ${environemnt.port} `);
   });
 };
 
