@@ -30,7 +30,7 @@ utilities.createRandomString = (strlength) => {
   if (length) {
     const possibleCharacters = "abcdefghijklmnopqrstuvwxyz1234567890";
     let output = "";
-    for (let i = 1; i < length; i += 1) {
+    for (let i = 1; i <= length; i += 1) {
       let randomCharacter = possibleCharacters.charAt(
         Math.floor(Math.random() * possibleCharacters.length)
       );

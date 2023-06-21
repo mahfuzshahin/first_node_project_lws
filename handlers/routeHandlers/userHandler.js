@@ -1,6 +1,7 @@
 const data = require("../../lib/data");
 const { hash } = require("../../helpers/utilities");
 const { parseJSON } = require("../../helpers/utilities");
+const tokenHandler = require("./tokenHandler");
 const handler = {};
 
 handler.userHandler = (requestProperties, callback) => {
@@ -80,22 +81,35 @@ handler._users.get = (requestProperties, callback) => {
   const phone =
     typeof requestProperties.queryStringObject.phone === "string" &&
     requestProperties.queryStringObject.phone.trim().length === 11
-      ? requestProperties.body.phone
+      ? requestProperties.queryStringObject.phone
       : false;
 
   if (phone) {
-    //look up the use
-    data.read("users", phone, (err, u) => {
-      const user = { ...parseJSON(u) };
-      if (!err && user) {
-        delete user.password;
-        callback(200, user);
+    //verify token
+    let token =
+      typeof requestProperties.headersObject.token === "string"
+        ? requestProperties.headersObject.token
+        : false;
+    console.log(requestProperties.headersObject.token);
+    tokenHandler._token.verify(token, phone, (tokenId) => {
+      if (tokenId) {
+        console.log(tokenId);
+        data.read("users", phone, (err, u) => {
+          const user = { ...parseJSON(u) };
+          if (!err && user) {
+            delete user.password;
+            callback(200, user);
+          } else {
+            callback(404, { error: "Requested was not found" });
+          }
+        });
       } else {
-        callback(404, { error: "Requested was not found" });
+        callback(403, { error: "Not Authenticated" });
       }
     });
+    //look up the use
   } else {
-    callback(404, { error: "Requested was not found" });
+    callback(404, { error: "Requested was not foundw" });
   }
 };
 handler._users.put = (requestProperties, callback) => {
@@ -124,29 +138,39 @@ handler._users.put = (requestProperties, callback) => {
   if (phone) {
     if (firstName || lastName || password) {
       //console.log(firstName);
+      const token =
+        typeof requestProperties.headersObject.token === "string"
+          ? requestProperties.headersObject.token
+          : false;
       //look up the user
-      data.read("users", phone, (err1, uData) => {
-        const userData = { ...parseJSON(uData) };
-        if (!err1 && userData) {
-          if (firstName) {
-            userData.firstName = firstName;
-          }
-          if (lastName) {
-            userData.lastName = lastName;
-          }
-          if (password) {
-            userData.password = hash(password);
-          }
-          //update data
-          data.update("users", phone, userData, (err2) => {
-            if (!err2) {
-              callback(200, { message: "success" });
+      tokenHandler._token.verify(token, phone, (tokenId) => {
+        if (tokenId) {
+          data.read("users", phone, (err1, uData) => {
+            const userData = { ...parseJSON(uData) };
+            if (!err1 && userData) {
+              if (firstName) {
+                userData.firstName = firstName;
+              }
+              if (lastName) {
+                userData.lastName = lastName;
+              }
+              if (password) {
+                userData.password = hash(password);
+              }
+              //update data
+              data.update("users", phone, userData, (err2) => {
+                if (!err2) {
+                  callback(200, { message: "success" });
+                } else {
+                  callback(500, { error: "server side" });
+                }
+              });
             } else {
-              callback(500, { error: "server side" });
+              callback(400, { error: "You have a problem in your " });
             }
           });
         } else {
-          callback(400, { error: "You have a problem in your " });
+          callback(403, { error: "Auth Failed" });
         }
       });
     } else {
@@ -160,21 +184,42 @@ handler._users.delete = (requestProperties, callback) => {
   const phone =
     typeof requestProperties.queryStringObject.phone === "string" &&
     requestProperties.queryStringObject.phone.trim().length === 11
-      ? requestProperties.body.phone
+      ? requestProperties.queryStringObject.phone
       : false;
-
+  console.log(phone);
   if (phone) {
-    data.read("users", phone, (err1, userData) => {
-      if (!err1 && userData) {
-        data.delete("users", phone, (err2) => {
-          if (!err2) {
-            callback(200, { message: "success" });
+    const token =
+      typeof requestProperties.headersObject.token === "string"
+        ? requestProperties.headersObject.token
+        : false;
+    //look up the user
+    tokenHandler._token.verify(token, phone, (tokenId) => {
+      if (tokenId) {
+        data.read("users", phone, (err1, uData) => {
+          const userData = { ...parseJSON(uData) };
+          if (!err1 && userData) {
+            //update data
+            data.read("users", phone, (err1, userData) => {
+              if (!err1 && userData) {
+                data.delete("users", phone, (err2) => {
+                  if (!err2) {
+                    callback(200, { message: "success deleted" });
+                  } else {
+                    callback(500, { error: "there was a server side error" });
+                  }
+                });
+              } else {
+                callback(400, {
+                  error: "there was a problem in your request5",
+                });
+              }
+            });
           } else {
-            callback(500, { error: "there was a server side error" });
+            callback(400, { error: "You have a problem in your " });
           }
         });
       } else {
-        callback(400, { error: "there was a problem in your request" });
+        callback(403, { error: "Auth Failed" });
       }
     });
   } else {
