@@ -3,9 +3,12 @@ const http = require("http");
 const { handleReqRes } = require("./helpers/handleReqRes");
 const environemnt = require("./helpers/environments");
 const data = require("./lib/data");
+const { sendTwilioSms } = require("./helpers/notifications");
 const app = {};
-
-// data.create(
+sendTwilioSms("01724808055", "Hello World", (err) => {
+  console.log(`this is the error`, err);
+});
+// data.create(,
 //   "test",
 //   "newFile",
 //   { name: "Bangladesh", language: "Bangla" },
